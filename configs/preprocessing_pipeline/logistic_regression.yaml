@@ -1,0 +1,14 @@
+_target_: pipeline.make_pipeline
+
+steps_config:
+  - SimpleImputer:
+      _target_: sklearn.impute.SimpleImputer
+      strategy: 'constant'
+      fill_value: '-1'
+
+  - VarianceThreshold:
+      _target_: sklearn.feature_selection.VarianceThreshold
+      threshold: 0.1
+
+  - StandardScaler:
+      _target_: sklearn.preprocessing.StandardScaler
