@@ -1,3 +1,5 @@
+from typing import Optional
+
 import hydra
 from hydra import initialize, compose
 from omegaconf import DictConfig
@@ -24,12 +26,15 @@ def make_pipeline(steps_config: DictConfig) -> Pipeline:
         pipeline_step = (step_name, hydra.utils.instantiate(step_params))
         steps.append(pipeline_step)
 
-    return Pipeline(steps)
+    return Pipeline(steps, memory='./cache')
 
 
-def get_preprocessing_pipeline() -> Pipeline:
+def get_preprocessing_pipeline(overrides: Optional[list[str]] = None) -> Pipeline:
+    if overrides is None:
+        overrides = []
+
     with initialize(version_base=None, config_path='configs'):
-        config = compose(config_name="config")
+        config = compose(config_name="config", overrides=overrides)
 
         return hydra.utils.instantiate(
             config.preprocessing_pipeline, _recursive_=False
