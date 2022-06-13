@@ -67,7 +67,7 @@ def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[List[
         config = compose(config_name=name + '_config', overrides=overrides)
 
         if debug:
-            print(OmegaConf.to_yaml(config))
+            print(OmegaConf.to_yaml(config.preprocessing_pipeline))
 
         return hydra.utils.instantiate(
             config.preprocessing_pipeline, _recursive_=False
@@ -82,7 +82,7 @@ def get_classifier_pipeline(name: str = 'cat_boot', overrides: Optional[List[str
         config = compose(config_name=name + '_config', overrides=overrides)
 
         if debug:
-            print(OmegaConf.to_yaml(config))
+            print(OmegaConf.to_yaml(config.classifier_pipeline))
 
         return hydra.utils.instantiate(
             config.classifier_pipeline, _recursive_=False
