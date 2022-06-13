@@ -331,3 +331,4 @@ cython_debug/
 
 # Dataset
 data/archive
+cache

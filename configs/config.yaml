@@ -1,3 +1,0 @@
-# @package _global_
-defaults:
-  - preprocessing_pipeline: logistic_regression

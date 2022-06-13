@@ -9,14 +9,15 @@ filename_to_cols = {'accepted_2007_to_2018Q4.csv': {'float_cols': ['member_id', 
                     'rejected_2007_to_2018Q4.csv': {'float_cols': ['Amount Requested', 'Risk_Score', 'Policy Code'],
                                                     'object_cols': ['Application Date', 'Loan Title', 'Debt-To-Income Ratio', 'Zip Code', 'State', 'Employment Length']}}
 
-def load_csv_compressed(fp: typing.Union[str, Path],
-                        nrows: typing.Optional[int] = None):
 
-    col_dict = filename_to_cols[Path(fp).name]
+def load_csv_compressed(fp: typing.Union[str, Path],
+                        nrows: typing.Optional[int] = None,
+                        usecols: typing.Optional[list[str]] = None):
+    fp = Path(__file__).parent.joinpath(fp)
+    col_dict = filename_to_cols[fp.name]
 
     dtypes = {col: np.dtype('float32') for col in col_dict['float_cols']}
     for col in col_dict['object_cols']:
         dtypes[col] = np.dtype('O')
 
-    return pd.read_csv(fp, dtype=dtypes, nrows=nrows)
-
+    return pd.read_csv(fp, dtype=dtypes, nrows=nrows, usecols=usecols)
