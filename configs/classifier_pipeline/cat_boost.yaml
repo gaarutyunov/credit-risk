@@ -4,7 +4,7 @@ steps_config:
     - Classifier:
         _target_: catboost.CatBoostClassifier
         iterations: 10
-        learning_rate: 0.001,
+        learning_rate: 0.001
         cat_features:
             - term
             - emp_title
