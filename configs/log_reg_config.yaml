@@ -1,3 +1,4 @@
 # @package _global_
 defaults:
   - preprocessing_pipeline: log_reg
+  - classifier_pipeline: log_reg

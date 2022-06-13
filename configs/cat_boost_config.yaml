@@ -1,3 +1,4 @@
 # @package _global_
 defaults:
   - preprocessing_pipeline: cat_boost
+  - classifier_pipeline: cat_boost
