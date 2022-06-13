@@ -12,7 +12,7 @@ filename_to_cols = {'accepted_2007_to_2018Q4.csv': {'float_cols': ['member_id', 
 
 def load_csv_compressed(fp: typing.Union[str, Path],
                         nrows: typing.Optional[int] = None,
-                        usecols: typing.Optional[list[str]] = None):
+                        usecols: typing.Optional[typing.List[str]] = None):
     fp = Path(__file__).parent.joinpath(fp)
     col_dict = filename_to_cols[fp.name]
 

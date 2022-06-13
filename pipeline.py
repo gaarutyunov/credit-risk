@@ -1,7 +1,7 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional
+from typing import Optional, List
 
 import hydra
 import pandas as pd
@@ -59,7 +59,7 @@ def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
     return Pipeline(steps, memory='./.cache/classifier')
 
 
-def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[list[str]] = None, debug: bool = False) -> Pipeline:
+def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[List[str]] = None, debug: bool = False) -> Pipeline:
     if overrides is None:
         overrides = []
 
@@ -74,7 +74,7 @@ def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[list[
         )
 
 
-def get_classifier_pipeline(name: str = 'cat_boot', overrides: Optional[list[str]] = None, debug: bool = False) -> Pipeline:
+def get_classifier_pipeline(name: str = 'cat_boot', overrides: Optional[List[str]] = None, debug: bool = False) -> Pipeline:
     if overrides is None:
         overrides = []
 
@@ -126,7 +126,7 @@ class LabelTransformer(TransformerMixin):
 class DataReader(TransformerMixin, abc.ABC):
     X: pd.DataFrame
 
-    def __init__(self, file: str, columns: list[str]) -> None:
+    def __init__(self, file: str, columns: List[str]) -> None:
         self.file = pathlib.Path(file)
         self.cols = columns
 
@@ -186,7 +186,7 @@ class LabelInferPipeline(ReaderPipeline):
 
 
 class ApplyToColumns(TransformerMixin, BaseEstimator):
-    def __init__(self, inner: TransformerMixin, columns: list[str]) -> None:
+    def __init__(self, inner: TransformerMixin, columns: List[str]) -> None:
         self.inner = inner
         self.columns = columns
 
