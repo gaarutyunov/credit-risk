@@ -1,6 +1,6 @@
 scikit-learn
-hydra-core==1.2.0
-omegaconf==2.2.1
+hydra-core
+omegaconf
 numpy
 pandas
 catboost

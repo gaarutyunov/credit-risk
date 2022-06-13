@@ -1,7 +1,7 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional, List
+from typing import Optional, List, Iterable
 
 import hydra
 import pandas as pd
@@ -177,9 +177,9 @@ class LabelInferPipeline(ReaderPipeline):
 
 
 class ApplyToColumns(TransformerMixin, BaseEstimator):
-    def __init__(self, inner: TransformerMixin, columns: List[str]) -> None:
+    def __init__(self, inner: TransformerMixin, columns: Iterable[str]) -> None:
         self.inner = inner
-        self.columns = columns
+        self.columns = list(columns)
 
     def fit(self, X, y=None, **fit_params):
         self.inner.fit(X[self.columns], y, **fit_params)
