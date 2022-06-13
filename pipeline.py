@@ -158,12 +158,6 @@ class ReaderPipeline(Pipeline):
     def _read(self, X, y=None, **fit_params):
         self.reader.fit(X, y, **fit_params)
 
-    def fit(self, X, y=None, **fit_params) -> Pipeline:
-        return super().fit(self.reader.X, y, **fit_params)
-
-    def transform(self, X):
-        return super().transform(self.reader.X)
-
 
 class LabelInferPipeline(ReaderPipeline):
     label_transformer: TransformerMixin
@@ -172,14 +166,11 @@ class LabelInferPipeline(ReaderPipeline):
         super().__init__(steps[:1] + steps[2:], memory=memory, verbose=verbose)
         self.label_transformer = steps[1][1]
 
-    def fit(self, X, y=None, **fit_params) -> Pipeline:
+    def fit(self, X, y=None, **fit_params):
         self._read(X, y, **fit_params)
         self.reader.X = self.label_transformer.fit_transform(self.reader.X)
 
         return super().fit(self.reader.X.drop(columns=['label']), self.reader.X['label'], **fit_params)
-
-    def transform(self, X):
-        return super().transform(self.reader.X)
 
     def fit_transform(self, X, y=None, **fit_params):
         return self.fit(X, y, **fit_params).transform(X)
