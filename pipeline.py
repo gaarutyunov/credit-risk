@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 import utils
 
 
-def make_pipeline(steps_config: DictConfig) -> Pipeline:
+def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
     """Creates a pipeline with all the preprocessing steps specified in `steps_config`, ordered in a sequential manner
 
     Args:
@@ -33,7 +33,30 @@ def make_pipeline(steps_config: DictConfig) -> Pipeline:
         pipeline_step = (step_name, hydra.utils.instantiate(step_params, _recursive_=True))
         steps.append(pipeline_step)
 
-    return LabelInferPipeline(steps, memory='./cache')
+    return LabelInferPipeline(steps, memory='./.cache/preprocessing')
+
+
+def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
+    """Creates a pipeline with all the classifier steps specified in `steps_config`, ordered in a sequential manner
+
+    Args:
+        steps_config (DictConfig): the config containing the instructions for
+                                    creating the feature selectors or transformers
+
+    Returns:
+        [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
+    """
+    steps = []
+
+    for step_config in steps_config:
+        # retrieve the name and parameter dictionary of the current steps
+        step_name, step_params = list(step_config.items())[0]
+
+        # instantiate the pipeline step, and append to the list of steps
+        pipeline_step = (step_name, hydra.utils.instantiate(step_params, _recursive_=True))
+        steps.append(pipeline_step)
+
+    return Pipeline(steps, memory='./.cache/classifier')
 
 
 def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[list[str]] = None, debug: bool = False) -> Pipeline:
@@ -51,6 +74,21 @@ def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[list[
         )
 
 
+def get_classifier_pipeline(name: str = 'cat_boot', overrides: Optional[list[str]] = None, debug: bool = False) -> Pipeline:
+    if overrides is None:
+        overrides = []
+
+    with initialize(version_base=None, config_path='configs'):
+        config = compose(config_name=name + '_config', overrides=overrides)
+
+        if debug:
+            print(OmegaConf.to_yaml(config))
+
+        return hydra.utils.instantiate(
+            config.classifier_pipeline, _recursive_=False
+        )
+
+
 class EmptyFit(TransformerMixin, abc.ABC):
     def fit(self, X, y=None, **fit_params):
         return self
@@ -60,15 +98,24 @@ class EmptyFit(TransformerMixin, abc.ABC):
         pass
 
 
-class LabelTransformer(EmptyFit):
-    def transform(self, X):
-        X['label'] = X['loan_status'].replace(('Fully Paid',
+class LabelTransformer(TransformerMixin):
+    label: pd.Series
+
+    def fit(self, X, y=None, **fit_params):
+        self.label = X['loan_status'].replace(('Fully Paid',
                                                'Charged Off',
                                                'Does not meet the credit policy. Status:Fully Paid',
                                                'Does not meet the credit policy. Status:Charged Off',
                                                'Default'
                                                ),
                                               (0, 1, 0, 1, 1))
+        self.label.drop(index=self.label[~self.label.isin([0, 1])].index, inplace=True)
+        self.label = pd.to_numeric(self.label)
+
+        return self
+
+    def transform(self, X):
+        X['label'] = self.label
         X.drop(columns=['loan_status'], inplace=True)
         X.drop(index=X[~X.label.isin([0, 1])].index, inplace=True)
         X['label'] = pd.to_numeric(X['label'])

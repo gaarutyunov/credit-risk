@@ -1,0 +1,20 @@
+_target_: pipeline.make_classifier_pipeline
+
+steps_config:
+    - Classifier:
+        _target_: catboost.CatBoostClassifier
+        iterations: 10
+        learning_rate: 0.001,
+        task_type: CPU # override with `classifier_pipeline.steps_config.0.Classifier.task_type=GPU` to train on GPU in Colab
+        cat_features:
+            - term
+            - emp_title
+            - emp_length
+            - home_ownership
+            - verification_status
+            - purpose
+            - addr_state
+            - earliest_cr_line
+            - initial_list_status
+            - application_type
+            - disbursement_method

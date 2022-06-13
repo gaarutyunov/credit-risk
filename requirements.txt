@@ -1,6 +1,8 @@
-scikit-learn~=1.0
-hydra-core==1.2.0
-omegaconf==2.2.1
-
-numpy~=1.22.3
-pandas~=1.4.2
+scikit-learn
+hydra-core
+omegaconf
+numpy
+pandas
+catboost
+git+https://github.com/sberbank-ai/wing.git@master#egg=wing
+kaggle
