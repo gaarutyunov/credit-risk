@@ -179,9 +179,10 @@ class LabelInferPipeline(ReaderPipeline):
 class ApplyToColumns(TransformerMixin, BaseEstimator):
     def __init__(self, inner: TransformerMixin, columns: Iterable[str]) -> None:
         self.inner = inner
-        self.columns = list(columns)
+        self.columns = columns
 
     def fit(self, X, y=None, **fit_params):
+        self.columns = list(self.columns)
         self.inner.fit(X[self.columns], y, **fit_params)
 
         return self
