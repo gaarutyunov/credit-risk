@@ -330,5 +330,5 @@ dmypy.json
 cython_debug/
 
 # Dataset
-data/archive
+data
 cache
