@@ -1,4 +1,5 @@
-_target_: pipeline.make_classifier_pipeline
+_target_: pipeline.make_pipeline
+name: classifier
 
 steps_config:
     - Classifier:

@@ -1,9 +1,10 @@
-_target_: pipeline.make_classifier_pipeline
+_target_: pipeline.make_pipeline
+name: classifier
 
 steps_config:
     - Classifier:
         _target_: pipeline.LogisticRegression
         max_epochs: 10
         lr: 0.01
-        module__input_dim: 48
+        module__input_dim: 380731
         module__output_dim: 1

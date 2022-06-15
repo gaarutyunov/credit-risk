@@ -2,3 +2,4 @@
 defaults:
   - preprocessing_pipeline: cat_boost
   - classifier_pipeline: cat_boost
+  - prediction_pipeline: cat_boost

@@ -42,7 +42,7 @@ def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
     return LabelInferPipeline(steps, memory="./.cache/preprocessing")
 
 
-def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
+def make_pipeline(steps_config: DictConfig, name: str = 'classifier') -> Pipeline:
     """Creates a pipeline with all the classifier steps specified in `steps_config`, ordered in a sequential manner
 
     Args:
@@ -51,6 +51,7 @@ def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
 
     Returns:
         [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
+        :param name: pipeline name for caching
     """
     steps = []
 
@@ -65,11 +66,14 @@ def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
         )
         steps.append(pipeline_step)
 
-    return Pipeline(steps, memory="./.cache/classifier")
+    return Pipeline(steps, memory="./.cache/" + name)
 
 
-def get_preprocessing_pipeline(
-    name: str = "cat_boot", overrides: Optional[List[str]] = None, debug: bool = False
+def get_pipeline(
+    name: str = "cat_boot",
+    group: str = 'preprocessing',
+    overrides: Optional[List[str]] = None,
+    debug: bool = False
 ) -> Pipeline:
     if overrides is None:
         overrides = []
@@ -80,22 +84,7 @@ def get_preprocessing_pipeline(
         if debug:
             print(OmegaConf.to_yaml(config.preprocessing_pipeline))
 
-        return hydra.utils.instantiate(config.preprocessing_pipeline, _recursive_=False)
-
-
-def get_classifier_pipeline(
-    name: str = "cat_boot", overrides: Optional[List[str]] = None, debug: bool = False
-) -> Pipeline:
-    if overrides is None:
-        overrides = []
-
-    with initialize(version_base=None, config_path="configs"):
-        config = compose(config_name=name + "_config", overrides=overrides)
-
-        if debug:
-            print(OmegaConf.to_yaml(config.classifier_pipeline))
-
-        return hydra.utils.instantiate(config.classifier_pipeline, _recursive_=False)
+        return hydra.utils.instantiate(config[group + '_pipeline'], _recursive_=False)
 
 
 class EmptyFit(TransformerMixin, abc.ABC):
@@ -221,8 +210,8 @@ class LogRegModule(torch.nn.Module):
 
         self.linear = torch.nn.Linear(input_dim, output_dim)
 
-    def forward(self, x):
-        outputs = torch.sigmoid(self.linear(x))
+    def forward(self, x: torch.Tensor):
+        outputs = torch.sigmoid(self.linear(x.float()))
         return outputs
 
 

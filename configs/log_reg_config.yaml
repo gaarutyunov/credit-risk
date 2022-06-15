@@ -2,3 +2,4 @@
 defaults:
   - preprocessing_pipeline: log_reg
   - classifier_pipeline: log_reg
+  - prediction_pipeline: log_reg

@@ -1,0 +1,5 @@
+_target_: pipeline.make_pipeline
+name: classifier
+
+steps_config:
+    - Predictor:
