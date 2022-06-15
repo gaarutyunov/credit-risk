@@ -211,8 +211,7 @@ class LogRegModule(torch.nn.Module):
         self.linear = torch.nn.Linear(input_dim, output_dim)
 
     def forward(self, x: torch.Tensor):
-        outputs = torch.sigmoid(self.linear(x.float()))
-        return outputs
+        return self.linear(x.float())
 
 
 class LogisticRegression(skorch.NeuralNetBinaryClassifier):
