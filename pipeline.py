@@ -230,5 +230,8 @@ class LogisticRegression(skorch.NeuralNetBinaryClassifier):
             criterion=criterion,
             train_split=train_split,
             threshold=threshold,
+            callbacks=[
+                skorch.callbacks.ProgressBar()
+            ],
             **kwargs
         )
