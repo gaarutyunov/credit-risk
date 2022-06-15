@@ -3,6 +3,7 @@ _target_: pipeline.make_preprocessing_pipeline
 steps_config:
     - CSVReader:
         _target_: pipeline.CSVReader
+        _convert_: all
         file: data/accepted_2007_to_2018Q4.csv
         columns:
             - loan_amnt
@@ -56,8 +57,10 @@ steps_config:
             - loan_status
     - LabelTransformer:
         _target_: pipeline.LabelTransformer
+        _convert_: all
     - ImputeNumerical:
         _target_: pipeline.ApplyToColumns
+        _convert_: all
         inner:
             _target_: sklearn.impute.SimpleImputer
             strategy: 'mean'
@@ -100,6 +103,7 @@ steps_config:
             - total_il_high_credit_limit
     - ImputeCategorical:
         _target_: pipeline.ApplyToColumns
+        _convert_: all
         inner:
             _target_: sklearn.impute.SimpleImputer
             strategy: 'most_frequent'

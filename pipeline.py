@@ -5,10 +5,13 @@ from typing import Optional, List, Iterable
 
 import hydra
 import pandas as pd
+import skorch
+import torch
 from hydra import initialize, compose
 from omegaconf import DictConfig, OmegaConf
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
+from skorch.dataset import ValidSplit
 
 import utils
 
@@ -30,10 +33,13 @@ def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
         step_name, step_params = list(step_config.items())[0]
 
         # instantiate the pipeline step, and append to the list of steps
-        pipeline_step = (step_name, hydra.utils.instantiate(step_params, _recursive_=True))
+        pipeline_step = (
+            step_name,
+            hydra.utils.instantiate(step_params, _recursive_=True),
+        )
         steps.append(pipeline_step)
 
-    return LabelInferPipeline(steps, memory='./.cache/preprocessing')
+    return LabelInferPipeline(steps, memory="./.cache/preprocessing")
 
 
 def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
@@ -53,40 +59,43 @@ def make_classifier_pipeline(steps_config: DictConfig) -> Pipeline:
         step_name, step_params = list(step_config.items())[0]
 
         # instantiate the pipeline step, and append to the list of steps
-        pipeline_step = (step_name, hydra.utils.instantiate(step_params, _recursive_=True))
+        pipeline_step = (
+            step_name,
+            hydra.utils.instantiate(step_params, _recursive_=True),
+        )
         steps.append(pipeline_step)
 
-    return Pipeline(steps, memory='./.cache/classifier')
+    return Pipeline(steps, memory="./.cache/classifier")
 
 
-def get_preprocessing_pipeline(name: str = 'cat_boot', overrides: Optional[List[str]] = None, debug: bool = False) -> Pipeline:
+def get_preprocessing_pipeline(
+    name: str = "cat_boot", overrides: Optional[List[str]] = None, debug: bool = False
+) -> Pipeline:
     if overrides is None:
         overrides = []
 
-    with initialize(version_base=None, config_path='configs'):
-        config = compose(config_name=name + '_config', overrides=overrides)
+    with initialize(version_base=None, config_path="configs"):
+        config = compose(config_name=name + "_config", overrides=overrides)
 
         if debug:
             print(OmegaConf.to_yaml(config.preprocessing_pipeline))
 
-        return hydra.utils.instantiate(
-            config.preprocessing_pipeline, _recursive_=False
-        )
+        return hydra.utils.instantiate(config.preprocessing_pipeline, _recursive_=False)
 
 
-def get_classifier_pipeline(name: str = 'cat_boot', overrides: Optional[List[str]] = None, debug: bool = False) -> Pipeline:
+def get_classifier_pipeline(
+    name: str = "cat_boot", overrides: Optional[List[str]] = None, debug: bool = False
+) -> Pipeline:
     if overrides is None:
         overrides = []
 
-    with initialize(version_base=None, config_path='configs'):
-        config = compose(config_name=name + '_config', overrides=overrides)
+    with initialize(version_base=None, config_path="configs"):
+        config = compose(config_name=name + "_config", overrides=overrides)
 
         if debug:
             print(OmegaConf.to_yaml(config.classifier_pipeline))
 
-        return hydra.utils.instantiate(
-            config.classifier_pipeline, _recursive_=False
-        )
+        return hydra.utils.instantiate(config.classifier_pipeline, _recursive_=False)
 
 
 class EmptyFit(TransformerMixin, abc.ABC):
@@ -102,23 +111,26 @@ class LabelTransformer(TransformerMixin):
     label: pd.Series
 
     def fit(self, X, y=None, **fit_params):
-        self.label = X['loan_status'].replace(('Fully Paid',
-                                               'Charged Off',
-                                               'Does not meet the credit policy. Status:Fully Paid',
-                                               'Does not meet the credit policy. Status:Charged Off',
-                                               'Default'
-                                               ),
-                                              (0, 1, 0, 1, 1))
+        self.label = X["loan_status"].replace(
+            (
+                "Fully Paid",
+                "Charged Off",
+                "Does not meet the credit policy. Status:Fully Paid",
+                "Does not meet the credit policy. Status:Charged Off",
+                "Default",
+            ),
+            (0, 1, 0, 1, 1),
+        )
         self.label.drop(index=self.label[~self.label.isin([0, 1])].index, inplace=True)
         self.label = pd.to_numeric(self.label)
 
         return self
 
     def transform(self, X):
-        X['label'] = self.label
-        X.drop(columns=['loan_status'], inplace=True)
+        X["label"] = self.label
+        X.drop(columns=["loan_status"], inplace=True)
         X.drop(index=X[~X.label.isin([0, 1])].index, inplace=True)
-        X['label'] = pd.to_numeric(X['label'])
+        X["label"] = pd.to_numeric(X["label"])
 
         return X
 
@@ -175,8 +187,8 @@ class LabelInferPipeline(ReaderPipeline):
     def fit(self, X, y=None, **fit_params):
         self._read(X, y, **fit_params)
         self.reader.X = self.label_transformer.fit_transform(self.reader.X)
-        y = self.reader.X['label']
-        self.reader.X.drop(columns=['label'], inplace=True)
+        y = self.reader.X["label"]
+        self.reader.X.drop(columns=["label"], inplace=True)
 
         return super().fit(self.reader.X, y, **fit_params)
 
@@ -201,3 +213,33 @@ class ApplyToColumns(TransformerMixin, BaseEstimator):
         X.loc[:, self.columns] = self.inner.transform(X[self.columns])
 
         return X
+
+
+class LogRegModule(torch.nn.Module):
+    def __init__(self, input_dim: int, output_dim: int = 1) -> None:
+        super().__init__()
+
+        self.linear = torch.nn.Linear(input_dim, output_dim)
+
+    def forward(self, x):
+        outputs = torch.sigmoid(self.linear(x))
+        return outputs
+
+
+class LogisticRegression(skorch.NeuralNetBinaryClassifier):
+    def __init__(
+        self,
+        *args,
+        criterion=torch.nn.BCEWithLogitsLoss,
+        train_split=ValidSplit(5, stratified=True),
+        threshold=0.5,
+        **kwargs
+    ):
+        super().__init__(
+            LogRegModule,
+            *args,
+            criterion=criterion,
+            train_split=train_split,
+            threshold=threshold,
+            **kwargs
+        )
