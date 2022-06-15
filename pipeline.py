@@ -82,7 +82,7 @@ def get_pipeline(
         config = compose(config_name=name + "_config", overrides=overrides)
 
         if debug:
-            print(OmegaConf.to_yaml(config.preprocessing_pipeline))
+            print(OmegaConf.to_yaml(config[group + '_pipeline']))
 
         return hydra.utils.instantiate(config[group + '_pipeline'], _recursive_=False)
 
