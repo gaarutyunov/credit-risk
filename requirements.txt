@@ -1,11 +1,10 @@
-scikit-learn~=1.0
+scikit-learn
 hydra-core
-omegaconf~=2.2.1
-numpy~=1.22.3
-pandas~=1.4.2
+omegaconf
+numpy
+pandas
 catboost
 git+https://github.com/sberbank-ai/wing.git@master#egg=wing
 kaggle
-
-skorch~=0.11.0
-torch~=1.10.2
+skorch
+torch
