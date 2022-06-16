@@ -8,3 +8,4 @@ git+https://github.com/sberbank-ai/wing.git@master#egg=wing
 kaggle
 skorch
 torch
+joblib

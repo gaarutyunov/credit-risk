@@ -3,3 +3,6 @@ name: classifier
 
 steps_config:
     - Predictor:
+        _target_: pipeline.CatBoostLoader
+        _convert_: all
+        load: models/cat_boost
