@@ -4,6 +4,7 @@ from os import PathLike
 from typing import Optional, List, Iterable
 
 import hydra
+import joblib
 import pandas as pd
 import skorch
 import torch
@@ -484,7 +485,7 @@ class LogRegLoader(LogisticRegression):
         criterion=torch.nn.BCEWithLogitsLoss,
         train_split=ValidSplit(5, stratified=True),
         threshold=0.5,
-        load="models/log_reg.pkl",
+        load="models/log_reg_torch.pkl",
         **kwargs
     ):
         super().__init__(
