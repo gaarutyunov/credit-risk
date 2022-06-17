@@ -1,4 +1,8 @@
-_target_: pipeline.make_preprocessing_pipeline
+_target_: pipeline.make_pipeline
+name: preprocessing/raw_data
+cls:
+    _target_: hydra.utils.get_class
+    path: pipeline.ReaderPipeline
 
 steps_config:
     - CSVReader:
@@ -54,11 +58,7 @@ steps_config:
             - tax_liens
             - total_il_high_credit_limit
             - disbursement_method
-            - loan_status
             - funded_amnt
-    - LabelTransformer:
-        _target_: pipeline.LabelTransformer
-        _convert_: all
     - ImputeNumerical:
         _target_: pipeline.ApplyToColumns
         _convert_: all

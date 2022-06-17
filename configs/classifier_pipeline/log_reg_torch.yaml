@@ -1,5 +1,5 @@
 _target_: pipeline.make_pipeline
-name: classifier
+name: classifier/log_reg_torch
 
 steps_config:
     - Classifier:

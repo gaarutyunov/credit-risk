@@ -1,7 +1,7 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional, List, Iterable
+from typing import Optional, List, Iterable, Callable, Any, Tuple
 
 import hydra
 import joblib
@@ -44,16 +44,18 @@ def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
     return LabelInferPipeline(steps, memory="./.cache/preprocessing")
 
 
-def make_pipeline(steps_config: DictConfig, name: str = "classifier") -> Pipeline:
+PipelineCtr = Callable[[...], Pipeline]
+
+
+def make_pipeline(steps_config: DictConfig, cls: PipelineCtr = Pipeline, name: str = "classifier") -> Pipeline:
     """Creates a pipeline with all the classifier steps specified in `steps_config`, ordered in a sequential manner
 
-    Args:
-        steps_config (DictConfig): the config containing the instructions for
+        :param steps_config: the config containing the instructions for
                                     creating the feature selectors or transformers
-
-    Returns:
-        [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
+        :param cls: pipeline class constructor to use
         :param name: pipeline name for caching
+
+        :returns [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
     """
     steps = []
 
@@ -68,7 +70,7 @@ def make_pipeline(steps_config: DictConfig, name: str = "classifier") -> Pipelin
         )
         steps.append(pipeline_step)
 
-    return Pipeline(steps, memory="./.cache/" + name)
+    return cls(steps, memory="./.cache/" + name)
 
 
 def get_pipeline(
@@ -151,7 +153,7 @@ class CSVReader(DataReader):
         return utils.load_csv_compressed(self.file, usecols=self.cols)
 
 
-class ReaderPipeline(Pipeline):
+class BaseReaderPipeline(Pipeline):
     reader: DataReader
 
     def __init__(self, steps, *, memory=None, verbose=False):
@@ -168,7 +170,13 @@ class ReaderPipeline(Pipeline):
         return super().transform(self.reader.X)
 
 
-class LabelInferPipeline(ReaderPipeline):
+class ReaderPipeline(BaseReaderPipeline):
+    def fit(self, X, y=None, **fit_params):
+        self._read(X, y, **fit_params)
+        return super().fit(X, y, **fit_params)
+
+
+class LabelInferPipeline(BaseReaderPipeline):
     label_transformer: TransformerMixin
 
     def __init__(self, steps, *, memory=None, verbose=False):

@@ -1,5 +1,5 @@
 _target_: pipeline.make_pipeline
-name: classifier
+name: prediction/cat_boost
 
 steps_config:
     - Predictor:

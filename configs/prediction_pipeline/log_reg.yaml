@@ -1,5 +1,5 @@
 _target_: pipeline.make_pipeline
-name: classifier
+name: prediction/log_reg
 
 steps_config:
     - Predictor:
