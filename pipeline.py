@@ -44,7 +44,7 @@ def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
     return LabelInferPipeline(steps, memory="./.cache/preprocessing")
 
 
-PipelineCtr = Callable[[...], Pipeline]
+PipelineCtr = Callable[[Any], Pipeline]
 
 
 def make_pipeline(steps_config: DictConfig, cls: PipelineCtr = Pipeline, name: str = "classifier") -> Pipeline:
