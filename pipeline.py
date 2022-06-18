@@ -117,7 +117,7 @@ class BaseReaderPipeline(Pipeline):
 class ReaderPipeline(BaseReaderPipeline):
     def fit(self, X, y=None, **fit_params):
         self._read(X, y, **fit_params)
-        return super().fit(X, y, **fit_params)
+        return super().fit(self.reader.X, y, **fit_params)
 
 
 class LabelInferPipeline(BaseReaderPipeline):
