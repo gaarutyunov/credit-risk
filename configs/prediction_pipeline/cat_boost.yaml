@@ -1,8 +1,7 @@
-_target_: pipeline.make_pipeline
-name: prediction/cat_boost
-
-steps_config:
-    - Predictor:
-        _target_: pipeline.CatBoostLoader
+_target_: sklearn.pipeline.Pipeline
+memory: ./cache/prediction/cat_boost
+steps:
+    - - Predictor
+      - _target_: pipeline.CatBoostLoader
         _convert_: all
         load: models/cat_boost

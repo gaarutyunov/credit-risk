@@ -1,8 +1,0 @@
-_target_: pipeline.make_pipeline
-name: prediction/log_reg_torch
-
-steps_config:
-    - Predictor:
-        _target_: pipeline.LogRegLoader
-        _convert_: all
-        load: models/log_reg_torch.pkl

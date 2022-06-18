@@ -1,8 +1,7 @@
-_target_: pipeline.make_pipeline
-name: classifier/log_reg
-
-steps_config:
-    - Classifier:
-        _target_: sklearn.linear_model.LogisticRegression
+_target_: sklearn.pipeline.Pipeline
+memory: ./cache/classifier/log_reg
+steps:
+    - - Classifier
+      - _target_: sklearn.linear_model.LogisticRegression
         _convert_: all
         class_weight: balanced

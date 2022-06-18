@@ -1,76 +1,20 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional, List, Iterable, Callable, Any, Tuple
+from typing import Optional, List, Iterable, Callable, Any
 
 import hydra
-import joblib
 import pandas as pd
-import skorch
-import torch
 from catboost import CatBoostClassifier
 from hydra import initialize, compose
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
-from skorch.dataset import ValidSplit
 
 import utils
 
 
-def make_preprocessing_pipeline(steps_config: DictConfig) -> Pipeline:
-    """Creates a pipeline with all the preprocessing steps specified in `steps_config`, ordered in a sequential manner
-
-    Args:
-        steps_config (DictConfig): the config containing the instructions for
-                                    creating the feature selectors or transformers
-
-    Returns:
-        [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
-    """
-    steps = []
-
-    for step_config in steps_config:
-        # retrieve the name and parameter dictionary of the current steps
-        step_name, step_params = list(step_config.items())[0]
-
-        # instantiate the pipeline step, and append to the list of steps
-        pipeline_step = (
-            step_name,
-            hydra.utils.instantiate(step_params, _recursive_=True),
-        )
-        steps.append(pipeline_step)
-
-    return LabelInferPipeline(steps, memory="./.cache/preprocessing")
-
-
 PipelineCtr = Callable[[Any], Pipeline]
-
-
-def make_pipeline(steps_config: DictConfig, cls: PipelineCtr = Pipeline, name: str = "classifier") -> Pipeline:
-    """Creates a pipeline with all the classifier steps specified in `steps_config`, ordered in a sequential manner
-
-        :param steps_config: the config containing the instructions for
-                                    creating the feature selectors or transformers
-        :param cls: pipeline class constructor to use
-        :param name: pipeline name for caching
-
-        :returns [sklearn.pipeline.Pipeline]: a pipeline with all the preprocessing steps, in a sequential manner
-    """
-    steps = []
-
-    for step_config in steps_config:
-        # retrieve the name and parameter dictionary of the current steps
-        step_name, step_params = list(step_config.items())[0]
-
-        # instantiate the pipeline step, and append to the list of steps
-        pipeline_step = (
-            step_name,
-            hydra.utils.instantiate(step_params, _recursive_=True),
-        )
-        steps.append(pipeline_step)
-
-    return cls(steps, memory="./.cache/" + name)
 
 
 def get_pipeline(
@@ -88,7 +32,7 @@ def get_pipeline(
         if debug:
             print(OmegaConf.to_yaml(config[group + "_pipeline"]))
 
-        return hydra.utils.instantiate(config[group + "_pipeline"], _recursive_=False)
+        return hydra.utils.instantiate(config[group + "_pipeline"], _recursive_=True)
 
 
 class EmptyFit(TransformerMixin, abc.ABC):
@@ -212,36 +156,6 @@ class ApplyToColumns(TransformerMixin, BaseEstimator):
         X.loc[:, self.columns] = self.inner.transform(X[self.columns])
 
         return X
-
-
-class LogRegModule(torch.nn.Module):
-    def __init__(self, input_dim: int, output_dim: int = 1) -> None:
-        super().__init__()
-
-        self.linear = torch.nn.Linear(input_dim, output_dim)
-
-    def forward(self, x: torch.Tensor):
-        return self.linear(x.float())
-
-
-class LogisticRegression(skorch.NeuralNetBinaryClassifier):
-    def __init__(
-        self,
-        *args,
-        criterion=torch.nn.BCEWithLogitsLoss,
-        train_split=ValidSplit(5, stratified=True),
-        threshold=0.5,
-        **kwargs
-    ):
-        super().__init__(
-            LogRegModule,
-            *args,
-            criterion=criterion,
-            train_split=train_split,
-            threshold=threshold,
-            callbacks=[skorch.callbacks.ProgressBar()],
-            **kwargs
-        )
 
 
 class CatBoostLoader(CatBoostClassifier):
@@ -484,23 +398,3 @@ class CatBoostLoader(CatBoostClassifier):
             callback,
         )
         self.load_model(load)
-
-
-class LogRegLoader(LogisticRegression):
-    def __init__(
-        self,
-        *args,
-        criterion=torch.nn.BCEWithLogitsLoss,
-        train_split=ValidSplit(5, stratified=True),
-        threshold=0.5,
-        load="models/log_reg_torch.pkl",
-        **kwargs
-    ):
-        super().__init__(
-            *args,
-            criterion=criterion,
-            train_split=train_split,
-            threshold=threshold,
-            **kwargs
-        )
-        self.load_params(load)

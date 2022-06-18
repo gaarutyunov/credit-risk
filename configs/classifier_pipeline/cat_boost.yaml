@@ -1,9 +1,8 @@
-_target_: pipeline.make_pipeline
-name: classifier/log_reg
-
-steps_config:
-    - Classifier:
-        _target_: catboost.CatBoostClassifier
+_target_: sklearn.pipeline.Pipeline
+memory: ./cache/classifier/cat_boost
+steps:
+    - - Classifier
+      - _target_: catboost.CatBoostClassifier
         _convert_: all
         iterations: 1000
         learning_rate: 0.001

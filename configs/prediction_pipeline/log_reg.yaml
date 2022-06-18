@@ -1,8 +1,7 @@
-_target_: pipeline.make_pipeline
-name: prediction/log_reg
-
-steps_config:
-    - Predictor:
-        _target_: joblib.load
+_target_: sklearn.pipeline.Pipeline
+memory: ./cache/prediction/log_reg
+steps:
+    - - Predictor
+      - _target_: joblib.load
         _convert_: all
         filename: models/log_reg.joblib
