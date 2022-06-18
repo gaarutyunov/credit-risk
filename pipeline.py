@@ -113,11 +113,20 @@ class BaseReaderPipeline(Pipeline):
     def transform(self, X):
         return super().transform(self.reader.X)
 
+    def fit_transform(self, X, y=None, **fit_params):
+        return self.fit(X, y, **fit_params).transform(X)
+
 
 class ReaderPipeline(BaseReaderPipeline):
     def fit(self, X, y=None, **fit_params):
         self._read(X, y, **fit_params)
         return super().fit(self.reader.X, y, **fit_params)
+
+    def transform(self, X):
+        return super().transform(self.reader.X)
+
+    def fit_transform(self, X, y=None, **fit_params):
+        return self.fit(X, y, **fit_params).transform(X)
 
 
 class LabelInferPipeline(BaseReaderPipeline):
