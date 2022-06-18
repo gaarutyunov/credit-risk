@@ -6,7 +6,6 @@ steps:
         _convert_: all
         file: data/accepted_2007_to_2018Q4.csv
         columns:
-            - issue_d
             - loan_amnt
             - term
             - int_rate
@@ -15,7 +14,6 @@ steps:
             - home_ownership
             - annual_inc
             - verification_status
-            - loan_status
             - purpose
             - addr_state
             - dti
@@ -56,6 +54,7 @@ steps:
             - total_il_high_credit_limit
             - disbursement_method
             - funded_amnt
+            - issue_d
     - - ImputeNumerical
       - _target_: pipeline.ApplyToColumns
         _convert_: all
