@@ -4,17 +4,10 @@ steps:
     - - Classifier
       - _target_: catboost.CatBoostClassifier
         _convert_: all
-        iterations: 1000
-        learning_rate: 0.001
+        iterations: 500
+        learning_rate: 0.01
         cat_features:
-            - term
             - emp_title
-            - emp_length
             - home_ownership
             - verification_status
             - purpose
-            - addr_state
-            - earliest_cr_line
-            - initial_list_status
-            - application_type
-            - disbursement_method

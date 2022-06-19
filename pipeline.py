@@ -1,10 +1,11 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional, List, Iterable, Callable, Any
+from typing import Optional, List, Iterable, Callable, Any, Dict
 
 import hydra
 import pandas as pd
+import yaml
 from catboost import CatBoostClassifier
 from hydra import initialize, compose
 from omegaconf import OmegaConf
@@ -12,7 +13,6 @@ from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
 
 import utils
-
 
 PipelineCtr = Callable[[Any], Pipeline]
 
@@ -286,7 +286,7 @@ class CatBoostLoader(CatBoostClassifier):
         text_processing=None,
         embedding_features=None,
         callback=None,
-        load='models/cat_boost',
+        load="models/cat_boost",
     ):
         super().__init__(
             iterations,
@@ -407,3 +407,158 @@ class CatBoostLoader(CatBoostClassifier):
             callback,
         )
         self.load_model(load)
+
+
+FILL_MAX_COLS = [
+    "bc_open_to_buy",
+    "mths_since_last_delinq",
+    "mths_since_last_major_derog",
+    "mths_since_last_record",
+    "mths_since_rcnt_il",
+    "mths_since_recent_bc",
+    "mths_since_recent_bc_dlq",
+    "mths_since_recent_inq",
+    "mths_since_recent_revol_delinq",
+    "pct_tl_nvr_dlq",
+    "sec_app_mths_since_last_major_derog",
+]
+
+FILL_MEAN_COLS = [
+    "annual_inc",
+    "dti",
+    "sec_app_fico_range_low",
+    "sec_app_fico_range_high",
+    "total_rev_hi_lim",
+    "total_bc_limit",
+    "total_il_high_credit_limit",
+    "tot_hi_cred_lim",
+    "il_util",
+    "sec_app_revol_util",
+    "bc_util",
+]
+
+PURPOSE_MAP = {
+    "home_improvement": "consumer_expenses",
+    "car": "consumer_expenses",
+    "vacation": "consumer_expenses",
+    "wedding": "consumer_expenses",
+}
+
+
+class CustomColumnTransformer(BaseEstimator, TransformerMixin):
+    def __init__(
+        self,
+        us_urbanization_xlsx_path: str,
+        fill_max_cols: Optional[List[str]] = None,
+        fill_mean_cols: Optional[List[str]] = None,
+        purpose_map=None,
+    ):
+        if purpose_map is None:
+            purpose_map = PURPOSE_MAP
+        if fill_mean_cols is None:
+            fill_mean_cols = FILL_MEAN_COLS
+        if fill_max_cols is None:
+            fill_max_cols = FILL_MAX_COLS
+        self.fill_max_cols = fill_max_cols
+
+        self.fill_mean_cols = fill_mean_cols
+
+        self.fill_min_cols = None
+
+        self.fill_dict = {}
+
+        self.purpose_map = purpose_map
+
+        self.us_urbanization_xlsx_path = us_urbanization_xlsx_path
+        self.us_state_to_urbanization = pd.read_excel(
+            us_urbanization_xlsx_path, index_col=0
+        )["Urbanization"]
+
+    def fit(self, X, y=None):
+        self.fit_or_transform(X, y, mode="fit")
+        return self
+
+    def transform(self, X, y=None):
+        return self.fit_or_transform(X, y, mode="transform")
+
+    def fit_or_transform(self, X, y=None, mode="fit"):
+        assert mode in ["fit", "transform"]
+
+        X = self.transform_verification_status(X, "verification_status")
+        X = self.simple_impute(X, mode)
+        X = self.transform_emp_title(X, "emp_title", mode)
+        X = self.transform_purpose(X, "purpose")
+        X = self.transform_addr_state(X, "addr_state")
+
+        return X
+
+    @staticmethod
+    def transform_verification_status(X, col):
+        X[col] = X[col].map({"Not Verified": False, "Source Verified": True})
+        X[col] = X[col].astype(bool)
+        return X
+
+    def transform_emp_title(self, X, col, mode):
+        # Аббревиатура и расшифровка
+        if mode == "fit":
+            self.abbr_to_occupation = {}
+
+            occupations = X["emp_title"].value_counts(ascending=True).index
+
+            for occ in occupations:
+                occ_split = occ.split()
+
+                if len(occ_split) < 2:
+                    continue
+
+                abbr = "".join([s[0] for s in occ_split])
+                self.abbr_to_occupation[abbr] = occ
+
+        X[col] = [self.abbr_to_occupation.get(occ, occ) for occ in X["emp_title"]]
+
+        if mode == "fit":
+            self.selected_jobs = X["emp_title"].value_counts().index[:20]
+
+        not_selected_jobs_mask = ~X["emp_title"].isin(self.selected_jobs)
+        X["emp_title"][not_selected_jobs_mask] = "other"
+
+        return X
+
+    def transform_purpose(self, X, col):
+        X[col] = [self.purpose_map.get(purp, purp) for purp in X[col]]
+        return X
+
+    def transform_addr_state(self, X, col):
+        X["addr_urbanization"] = X[col].map(self.us_state_to_urbanization)
+        X.drop(columns=col, inplace=True)
+        return X
+
+    def simple_impute(self, X, mode):
+
+        if mode == "fit":
+            self.fill_max_cols = list(set(self.fill_max_cols) & set(X.columns))
+            self.fill_mean_cols = list(set(self.fill_mean_cols) & set(X.columns))
+            self.fill_min_cols = list(
+                set(X.columns) - set(self.fill_max_cols) - set(self.fill_mean_cols)
+            )
+
+        for cols, kind in zip(
+            [self.fill_min_cols, self.fill_mean_cols, self.fill_max_cols],
+            ["min", "mean", "max"],
+        ):
+
+            if mode == "fit":
+                self.fill_dict[kind] = eval(f"np.{kind}(X[cols], axis=0)")
+
+            fillna_vals = self.fill_dict[kind]
+            X[cols] = X[cols].fillna(fillna_vals)
+
+        return X
+
+
+if __name__ == "__main__":
+    t = CustomColumnTransformer()
+
+    print(yaml.dump(t.fill_max_cols, explicit_start=True, default_flow_style=False))
+    print(yaml.dump(t.fill_mean_cols, explicit_start=True, default_flow_style=False))
+    print(yaml.dump(t.purpose_map, explicit_start=True, default_flow_style=False))
