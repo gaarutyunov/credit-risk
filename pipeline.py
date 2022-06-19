@@ -1,17 +1,16 @@
 import abc
 import pathlib
 from os import PathLike
-from typing import Optional, List, Iterable, Callable, Any, Dict
+from typing import Optional, List, Iterable, Callable, Any
 
 import hydra
 import pandas as pd
-import yaml
 from catboost import CatBoostClassifier
 from hydra import initialize, compose
 from omegaconf import OmegaConf
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.pipeline import Pipeline
-
+import numpy as np
 import utils
 
 PipelineCtr = Callable[[Any], Pipeline]
@@ -548,17 +547,10 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         ):
 
             if mode == "fit":
-                self.fill_dict[kind] = eval(f"np.{kind}(X[cols], axis=0)")
+                f = getattr(np, kind)
+                self.fill_dict[kind] = f(X[cols], axis=0)
 
             fillna_vals = self.fill_dict[kind]
             X[cols] = X[cols].fillna(fillna_vals)
 
         return X
-
-
-if __name__ == "__main__":
-    t = CustomColumnTransformer()
-
-    print(yaml.dump(t.fill_max_cols, explicit_start=True, default_flow_style=False))
-    print(yaml.dump(t.fill_mean_cols, explicit_start=True, default_flow_style=False))
-    print(yaml.dump(t.purpose_map, explicit_start=True, default_flow_style=False))
