@@ -15,14 +15,12 @@ steps:
             - purpose
             - dti
             - delinq_2yrs
-            - fico_range_high
             - inq_last_6mths
             - pub_rec
             - revol_bal
             - out_prncp
-            - total_rec_late_fee
-            - recoveries
-            - last_fico_range_low
+            - fico_range_high
+            - fico_range_low
             - collections_12_mths_ex_med
             - dti_joint
             - acc_now_delinq
