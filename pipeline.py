@@ -487,7 +487,7 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         X = self.simple_impute(X, mode)
         X = self.transform_emp_title(X, "emp_title", mode)
         X = self.transform_purpose(X, "purpose")
-        X = self.transform_addr_state(X, "addr_state")
+        X = self.transform_addr_state(X, "addr_state", mode)
 
         return X
 
@@ -527,9 +527,12 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         X[col] = [self.purpose_map.get(purp, purp) for purp in X[col]]
         return X
 
-    def transform_addr_state(self, X, col):
-        X["addr_urbanization"] = X[col].map(self.us_state_to_urbanization)
-        X.drop(columns=col, inplace=True)
+    def transform_addr_state(self, X, col, mode):
+        if mode == 'fit':
+            self.mapped_addr = X[col].map(self.us_state_to_urbanization)
+        else:
+            X[col] = self.mapped_addr
+            X.drop(columns=col, inplace=True)
         return X
 
     def simple_impute(self, X: pd.DataFrame, mode):
