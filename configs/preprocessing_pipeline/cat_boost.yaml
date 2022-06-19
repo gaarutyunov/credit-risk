@@ -50,6 +50,7 @@ steps:
             - sec_app_collections_12_mths_ex_med
             - sec_app_mths_since_last_major_derog
             - addr_state
+            - load_status
     - - LabelTransformer
       - _target_: pipeline.LabelTransformer
         _convert_: all
