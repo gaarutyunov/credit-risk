@@ -535,7 +535,7 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
     def simple_impute(self, X: pd.DataFrame, mode):
 
         if mode == "fit":
-            numeric_cols = X.select_dtypes(include=np.numeric).columns
+            numeric_cols = X.select_dtypes(include=np.number).columns
 
             self.fill_max_cols = list(set(self.fill_max_cols) & set(numeric_cols))
             self.fill_mean_cols = list(set(self.fill_mean_cols) & set(numeric_cols))
