@@ -532,13 +532,15 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
         X.drop(columns=col, inplace=True)
         return X
 
-    def simple_impute(self, X, mode):
+    def simple_impute(self, X: pd.DataFrame, mode):
 
         if mode == "fit":
-            self.fill_max_cols = list(set(self.fill_max_cols) & set(X.columns))
-            self.fill_mean_cols = list(set(self.fill_mean_cols) & set(X.columns))
+            numeric_cols = X.select_dtypes(include=np.numeric).columns
+
+            self.fill_max_cols = list(set(self.fill_max_cols) & set(numeric_cols))
+            self.fill_mean_cols = list(set(self.fill_mean_cols) & set(numeric_cols))
             self.fill_min_cols = list(
-                set(X.columns) - set(self.fill_max_cols) - set(self.fill_mean_cols)
+                set(numeric_cols) - set(self.fill_max_cols) - set(self.fill_mean_cols)
             )
 
         for cols, kind in zip(
