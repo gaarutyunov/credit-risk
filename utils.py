@@ -195,7 +195,7 @@ def load_csv_compressed(
     return pd.read_csv(fp, dtype=dtypes, nrows=nrows, usecols=usecols)
 
 
-def capcurve(y_values, y_preds_proba, name='CatBoost', percent=.5, save:bool = true):
+def capcurve(y_values, y_preds_proba, name='CatBoost', percent=.5, save:bool = True):
     num_pos_obs = int(np.sum(y_values))
     num_count = len(y_values)
     rate_pos_obs = float(num_pos_obs) / float(num_count)
