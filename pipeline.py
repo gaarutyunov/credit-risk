@@ -559,3 +559,20 @@ class CustomColumnTransformer(BaseEstimator, TransformerMixin):
             X[cols] = X[cols].fillna(fillna_vals)
 
         return X
+
+
+class JobTransformer(TransformerMixin, BaseEstimator):
+    def __init__(self, max_jobs: int = 20) -> None:
+        super().__init__()
+        self.selected_jobs = None
+        self.max_jobs = max_jobs
+
+    def fit(self, X, y=None):
+        self.selected_jobs = X["emp_title"].value_counts().index[:20]
+        return self
+
+    def transform(self, X, y=None):
+        not_selected_jobs_mask = ~X["emp_title"].isin(self.selected_jobs)
+        X["emp_title"][not_selected_jobs_mask] = "other"
+
+        return X

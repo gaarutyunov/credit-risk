@@ -7,3 +7,5 @@ catboost
 git+https://github.com/sberbank-ai/wing.git@master#egg=wing
 kaggle
 joblib
+matplotlib
+scipy
