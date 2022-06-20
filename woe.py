@@ -12,7 +12,7 @@ import re
 import traceback
 import string
 
-max_bin = 20
+max_bin = 10
 force_bin = 3
 
 # define a binning function
