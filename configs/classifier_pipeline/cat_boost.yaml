@@ -9,6 +9,7 @@ steps:
         cat_features:
             - term
             - emp_length
+            - emp_title
             - home_ownership
             - verification_status
             - purpose
