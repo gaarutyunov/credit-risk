@@ -7,7 +7,15 @@ steps:
         iterations: 500
         learning_rate: 0.01
         cat_features:
-            - emp_title
+            - term
+            - emp_length
             - home_ownership
             - verification_status
             - purpose
+            - zip_code
+            - addr_state
+            - earliest_cr_line
+            - application_type
+            - verification_status_joint
+            - sec_app_earliest_cr_line
+            - disbursement_method
