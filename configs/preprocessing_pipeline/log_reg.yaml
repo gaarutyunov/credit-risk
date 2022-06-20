@@ -26,6 +26,36 @@ steps:
     - - LabelTransformer
       - _target_: pipeline.LabelTransformer
         _convert_: all
+    - - ImputeNumerical
+      - _target_: pipeline.ApplyToColumns
+        _convert_: all
+        inner:
+          _target_: sklearn.impute.SimpleImputer
+          strategy: 'mean'
+        columns:
+          - loan_amnt
+          - fico_range_low
+          - fico_range_high
+          - revol_bal
+    - - ImputeCategorical
+      - _target_: pipeline.ApplyToColumns
+        _convert_: all
+        inner:
+          _target_: sklearn.impute.SimpleImputer
+          strategy: 'most_frequent'
+        columns:
+          - term
+          - emp_length
+          - home_ownership
+          - verification_status
+          - purpose
+          - zip_code
+          - addr_state
+          - earliest_cr_line
+          - application_type
+          - verification_status_joint
+          - sec_app_earliest_cr_line
+          - disbursement_method
     - - ColumnTransformer
       - _target_: sklearn.compose.ColumnTransformer
         _convert_: all
