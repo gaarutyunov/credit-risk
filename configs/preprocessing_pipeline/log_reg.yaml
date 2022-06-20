@@ -23,6 +23,7 @@ steps:
             - fico_range_high
             - revol_bal
             - loan_status
+            - emp_title
     - - LabelTransformer
       - _target_: pipeline.LabelTransformer
         _convert_: all
