@@ -57,6 +57,10 @@ steps:
           - verification_status_joint
           - sec_app_earliest_cr_line
           - disbursement_method
+    - - EmpTitle
+      - _target_: pipeline.JobTransformer
+        _convert_: all
+        max_jobs: 20
     - - ColumnTransformer
       - _target_: sklearn.compose.ColumnTransformer
         _convert_: all
@@ -66,6 +70,7 @@ steps:
               - _target_: sklearn.preprocessing.OneHotEncoder
               - - term
                 - emp_length
+                - emp_title
                 - home_ownership
                 - verification_status
                 - purpose
@@ -82,7 +87,3 @@ steps:
                 - fico_range_low
                 - fico_range_high
                 - revol_bal
-            - - emp
-              - _target_: pipeline.JobTransformer
-                max_jobs: 20
-              - - emp_title
